@@ -68,6 +68,8 @@ class DGModel:
                     DG.nodes[head_node]['count'] = 0
 
         # when the whole url_buffer has the same url, then head_node might not have 'count' attribute
+        if not DG.has_node(head_node):
+            DG.add_node(head_node)
         if len(successors) == 0 and 'count' not in DG.nodes[head_node]:
             DG.nodes[head_node]['count'] = 0
 
@@ -107,9 +109,11 @@ class ModelTester:
         for idx, url in enumerate(self.urls):
             if idx < self.idx_begin_test:
                 self.model.feed(url)
+                if idx == self.idx_begin_test - 1:
+                    history_url = url
             else:
                 # prefetch engine here
-                predicted_urls = self.model.predict(url)
+                predicted_urls = self.model.predict(history_url)
                 for predicted_url in predicted_urls:
                     if not (predicted_url in self.cacheset):
                         self.cacheset.add(predicted_url)
@@ -119,6 +123,7 @@ class ModelTester:
                     self.hitset.add(url)
                 else:
                     self.misscount += 1
+                history_url = url
                 self.model.feed(url)
 
         return len(self.cacheset), len(self.hitset), self.hitcount, self.misscount, self.prefetchcount
