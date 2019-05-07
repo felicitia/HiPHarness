@@ -8,6 +8,8 @@ def dg_test_user(reader, account, model_build_func,sliding_window_size,train_rat
     urls = reader.get_urls_by_account(account)
     tester = SlidingWindowModelTester(sliding_window_size, model_build_func, 1)
     tester.load_urls(urls)
+    if len(urls) > 3932 or len(urls) <  sliding_window_size:
+        return None
     line = [account, str(len(urls)), [], [], [], [], [], [], [], [], []]
     for stage in tester.train_and_test(train_ratio):
         if stage is not False:
@@ -24,8 +26,8 @@ if __name__ == '__main__':
     parser.add_argument('account', type=str)
     parser.add_argument('--data-dir', type=str, default="./data")
     parser.add_argument('--dg-window-size', type=int, default=5)
-    parser.add_argument('--dg-weight-threshold', type=int, default=0.8)
-    parser.add_argument('--train-ratio', type=int, default=0.8)
+    parser.add_argument('--dg-weight-threshold', type=float, default=0.8)
+    parser.add_argument('--train-ratio', type=float, default=0.8)
     parser.add_argument('--sliding-window-size', type=int, default=50)
 
     args = parser.parse_args()
