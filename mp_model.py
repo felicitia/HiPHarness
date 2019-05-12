@@ -1,11 +1,11 @@
 
 class MPModel:
-    def __init__(self,m,n,policy,dependency_threshold,frequency_of_change_threshold):
+    def __init__(self,m=5,n=5):
         self.m = m
         self.n = n
-        self.policy = policy
-        self.dependency_threshold = dependency_threshold
-        self.frequency_of_change_threshold = frequency_of_change_threshold
+        # self.policy = policy
+        # self.dependency_threshold = dependency_threshold
+        # self.frequency_of_change_threshold = frequency_of_change_threshold
         self.trained = False
         self.urls = []
         self.url_popularity_list = {}
@@ -23,7 +23,7 @@ class MPModel:
             # for each client's requests within n requests after active
             for url in self.urls[idx+1:idx+1+self.n]:
 
-                if active_url in self.url_popularity_list:
+                if active_url not in self.url_popularity_list:
                     self.url_popularity_list[active_url] = {}
                 
 
@@ -53,16 +53,45 @@ class MPModel:
         active_url = history[0]
 
         # for each of ** m most ** popular requests in active request's n-next popularity list
-        for url,popularity in self.url_popularity_list[active_url][0:self.m]:
-            if self.policy == "aggressive":
+        if active_url in  self.url_popularity_list:
+            for url,popularity in self.url_popularity_list[active_url][0:self.m]:
                 results.append(url)
-            # size whose size ??
-            # elif policy == "strict":
-            #     if 
-            # if (policy == strict) && (size > average size):
-            #if (dependency > dependency threshold) && (frequency of change < frequency
-            #of change threshold):
-            #add request in set of predicted pages
+
+            # Update model
+            self.url_popularity_list[active_url] =  [(pair[0],pair[1]+1) if pair[0]==url else pair for pair in self.url_popularity_list[active_url]]
+
+        # return results
+        return results
+
+
+
+class DomainSplitMPModel:
+    def __init__(self, m, n):
+        self.m = m
+        self.n = n
+        self.instances = {}
+
+    def get_mp_instance(self, domain):
+        if domain not in self.instances:
+            self.instances[domain] = MPModel(self.m, self.n)
+        return self.instances[domain]
+
+    def feed(self, url):
+        domain = url.split("/", 1)[0]
+        self.get_mp_instance(domain).feed(url)
+
+    def predict(self, history):
+        grouped_urls = {}
+        for his_url in history:
+            domain = his_url.split("/", 1)[0]
+            if domain not in grouped_urls:
+                grouped_urls[domain] = []
+            grouped_urls[domain].append(his_url)
+        result = []
+        for domain, urls in grouped_urls.items():
+            result = result + self.get_mp_instance(domain).predict(urls[-1])
+        return result
+
 
 
 

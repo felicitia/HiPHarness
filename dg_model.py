@@ -75,3 +75,31 @@ class DGModel:
                 if self.G[url][suc]['weight'] > self.weight_threshold:
                     result.append(url)
         return result
+
+
+class DomainSplitDGModel:
+    def __init__(self,window_size=5, weight_threshold=0.5):
+        self.window_size = window_size
+        self.weight_threshold = weight_threshold
+        self.instances = {}
+
+    def get_dg_instance(self, domain):
+        if domain not in self.instances:
+            self.instances[domain] = DGModel(self.window_size,self.weight_threshold)
+        return self.instances[domain]
+
+    def feed(self, url):
+        domain = url.split("/", 1)[0]
+        self.get_dg_instance(domain).feed(url)
+
+    def predict(self, history):
+        grouped_urls = {}
+        for his_url in history:
+            domain = his_url.split("/", 1)[0]
+            if domain not in grouped_urls:
+                grouped_urls[domain] = []
+            grouped_urls[domain].append(his_url)
+        result = []
+        for domain, urls in grouped_urls.items():
+            result = result + self.get_dg_instance(domain).predict(urls[-1])
+        return result

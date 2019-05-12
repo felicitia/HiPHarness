@@ -19,3 +19,29 @@ class PrefetchEverythingModel:
 
     def predict(self,history):
         return list(self.cacheset)
+
+class DomainSplitPEModel:
+    def __init__(self):
+        self.instances = {}
+
+    def get_pe_instance(self, domain):
+        if domain not in self.instances:
+            self.instances[domain] = PrefetchEverythingModel()
+        return self.instances[domain]
+
+    def feed(self, url):
+        domain = url.split("/", 1)[0]
+        self.get_pe_instance(domain).feed(url)
+
+    def predict(self, history):
+        grouped_urls = {}
+        for his_url in history:
+            domain = his_url.split("/", 1)[0]
+            if domain not in grouped_urls:
+                grouped_urls[domain] = []
+            grouped_urls[domain].append(his_url)
+        result = []
+        for domain, urls in grouped_urls.items():
+            result = result + self.get_pe_instance(domain).predict(urls[-1])
+        return result
+
