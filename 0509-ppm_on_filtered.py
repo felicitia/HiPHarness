@@ -4,13 +4,13 @@ import os
 import json
 import argparse
 
-from dg_model import DGModel
+from domain_split_ppm import DomainSplitPPMModel
 from sliding_window_model_tester import SlidingWindowModelTester
-from url_record_reader2 import URLRecordReader
+from url_record_reader import URLRecordReader
 
 
 
-def dg_test_user(reader, account, model_build_func,train_ratio):
+def ppm_test_user(reader, account, model_build_func,train_ratio):
     urls = reader.get_urls_by_account(account)
     total = len(urls)
     if total < 10 or total >= 3932:
@@ -24,23 +24,25 @@ def dg_test_user(reader, account, model_build_func,train_ratio):
                 line[idx + 2].append(str(col))
 
     for i in range(2, 11):
-        line[i] = " ".join(line[i])
+        line[i] = " ".join(line[i]) 
     return ",".join(line)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='DG Prefetch~')
     parser.add_argument('--data-dir', type=str, default="./data")
-    parser.add_argument('--dg-window-size', type=float, default=5)
-    parser.add_argument('--dg-weight-threshold', type=int, default=0.8)
+    parser.add_argument('--ppm-order', type=float, default=5)
+    parser.add_argument('--ppm-threshold', type=int, default=0.8)
     parser.add_argument('--train-ratio', type=float, default=0.8)
     # parser.add_argument('--sliding-window-size', type=int, default=50)
 
     args = parser.parse_args()
     reader = URLRecordReader(args.data_dir)
-    model_build_func = lambda :DGModel(args.dg_window_size,args.dg_weight_threshold)
+    model_build_func = lambda :DomainSplitPPMModel(args.ppm_order,args.ppm_threshold)
+    print("user_id,#url,cache_size_array,hit_set_size_array,miss_set_size_array,hit_array,miss_array,prefetch_array,precision_array,recall_array,running_time_array")
     for account in reader.accounts():
-        print(dg_test_user(reader,account,model_build_func,args.train_ratio))
-
+        r = ppm_test_user(reader,account,model_build_func,args.train_ratio)
+        if r:
+            print(r)
 
 

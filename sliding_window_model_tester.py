@@ -35,7 +35,7 @@ class SlidingWindowModelTester:
 
         begin = math.ceil(self.window_size * train_ratio)
 
-        end = self.window_size 
+        end = self.window_size - 1
         t0 = time.time()
        
         while end < total_urls:
@@ -46,11 +46,13 @@ class SlidingWindowModelTester:
 
             while begin < end:
                 # predict engine
-                # continuous training
+               
                 current_url = self.urls[begin]
-                model.feed(current_url)
+                
                 # print(self.urls[begin - self.history_count:begin][0] ==self.urls[begin - 1] )
+                # " history count == 1 " "
                 predict_urls = model.predict(self.urls[begin - self.history_count:begin])
+                # print(current_url in self.urls[begin - self.history_count:begin],current_url in predict_urls)
                 for predict_url in predict_urls:
                     if predict_url not in cache_set:
                         cache_set.add(predict_url)
@@ -64,8 +66,9 @@ class SlidingWindowModelTester:
                     # add miss set
                     miss_set.add(current_url)
                     miss_count += 1
-
-
+                
+                 # continuous training
+                model.feed(current_url)
 
                 begin += 1
 
@@ -74,7 +77,8 @@ class SlidingWindowModelTester:
             # print("p",precision,len(hit_set),len(cache_set) )
             # print("r",recall,hit_count+miss_count)
             # yield stage result
-
+            # print(cache_set)
+            # print(hit_set)
             yield len(cache_set), len(hit_set), len(
                 miss_set), hit_count, miss_count, prefetch_count, precision, recall, time.time() - t0
 
